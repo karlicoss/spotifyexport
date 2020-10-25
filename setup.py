@@ -12,6 +12,7 @@ def main():
         package_data={pkg: ['py.typed']},
 
         install_requires=[
+            'spotipy', # API
         ],
         extras_require={
             'testing': ['pytest'],
