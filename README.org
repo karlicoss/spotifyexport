@@ -10,7 +10,7 @@ Export your personal Spotify data: playlists, saved tracks/albums/shows, etc. as
 * Setting up
 1. The easiest way is =pip3 install --user git+https://github.com/karlicoss/spotifyexport=.
 
-   Alternatively, use =git clone --recursive=, or =git pull && git submodules update --init=. After that, you can use =pip3 install --editable=.
+   Alternatively, use =git clone --recursive=, or =git pull && git submodule update --init=. After that, you can use =pip3 install --editable=.
 2. To use the API, you need to create a new app on [[https://developer.spotify.com/dashboard/applications][Spotify for Developers]]
 
    For =redirect_uri=: you can pick pretty much anything, e.g. =https://github.com=. After that you'll get =client_id= and =client_secret=.
