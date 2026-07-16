@@ -1,0 +1,63 @@
+# see https://github.com/karlicoss/pymplate for up-to-date reference
+
+name: CI
+on:
+  push:
+    # Deliberate: we want CI on pushed branches without having to open a PR.
+    branches: '**'
+    tags: 'v[0-9]+.*' # only trigger on 'release' tags for PyPi
+    # Ideally I would put this in the pypi job... but github syntax doesn't allow for regexes there :shrug:
+
+  # Needed to trigger on others' PRs.
+  # Note that people who fork it need to go to "Actions" tab on their fork and click "I understand my workflows, go ahead and enable them".
+  # NOTE: together with the push trigger above, same-repo branches with an open PR get double CI runs.
+  # Keeping both anyway: push covers branches without a PR, this one is needed for fork PRs,
+  # and the runs aren't identical -- pull_request checks the merge commit against the base branch, push checks the branch head.
+  pull_request:
+
+  # Needed to trigger workflows manually.
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+  schedule:
+    - cron: '31 18 * * 5'  # run every Friday
+
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.12', '3.13', '3.14']
+        # vvv just an example of excluding stuff from matrix
+        # exclude: [{platform: macos-latest, python-version: '3.6'}]
+
+    runs-on: ${{ matrix.platform }}
+
+    # useful for 'optional' pipelines
+    # continue-on-error: ${{ matrix.platform == 'windows-latest' }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+        fetch-depth: 0  # nicer to have all git history when debugging/for tests
+
+    - uses: astral-sh/setup-uv@v8.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        enable-cache: false  # we don't have lock files during initial CI checkout, so can't use them as cache key
+
+    - uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true  # restrict to the user who kicked off pipeline
+      if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
+    # explicit bash command is necessary for Windows CI runner, otherwise it thinks it's cmd...
+    - run: bash .ci/run
