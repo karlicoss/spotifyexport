@@ -1,3 +1,0 @@
-[submodule "src/spotifyexport/exporthelpers"]
-	path = src/spotifyexport/exporthelpers
-	url = https://github.com/karlicoss/exporthelpers.git
