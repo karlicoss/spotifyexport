@@ -1,11 +1,13 @@
+import argparse
 import json
+from collections.abc import Callable
 
+import hpikit.cli.export as cli
 import spotipy  # type: ignore[import-untyped]
+from hpikit.json import Json
+from kloggy import get_logger
 
-from .exporthelpers import logging_helper
-from .exporthelpers.export_helper import Json, Parser, setup_parser
-
-logger = logging_helper.make_logger('spotifyexport')
+logger = get_logger(__name__)
 
 
 def _cleanup(j: Json) -> Json:
@@ -24,7 +26,7 @@ def _cleanup(j: Json) -> Json:
     return j
 
 
-def as_list(api_method) -> list[Json]:
+def as_list(api_method: Callable[..., Json]) -> list[Json]:
     results: list[Json] = []
     while True:
         offset = len(results)
@@ -68,7 +70,7 @@ class Exporter:
         }  # fmt: skip
 
 
-def get_json(**params):
+def get_json(**params) -> Json:
     return Exporter(**params).export_json()
 
 
@@ -76,17 +78,15 @@ def main() -> None:
     p = make_parser()
     args = p.parse_args()
 
-    params = args.params
-    dumper = args.dumper
+    params = cli.get_params(p, args)
     j = get_json(**params)
     js = json.dumps(j, ensure_ascii=False, indent=1)
-    dumper(js)
+    cli.dump(js, path=args.path)
 
 
-def make_parser():
-    p = Parser('Export your personal Spotify data: playlists, saved tracks/albums/shows, etc. as JSON.')
-    setup_parser(
-        parser=p,
+def make_parser() -> argparse.ArgumentParser:
+    p = cli.make_parser(
+        description='Export your personal Spotify data: playlists, saved tracks/albums/shows, etc. as JSON.',
         params=[
             'client_id',
             'client_secret',
